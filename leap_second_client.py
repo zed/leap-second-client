@@ -1,4 +1,22 @@
+#!/usr/bin/env python
 """Python client for IERS-OP WEB SERVICE.
+
+As a library:
+
+  >>> from leap_second_client import request_leap_second_info
+  >>> request_leap_second_info()
+  LeapSecondInfo(TAI_UTC=36,
+                 last_leap_second=datetime.date(2015, 6, 30),
+                 next_leap_second=None)
+
+Or as a command-line client (greppable json output):
+
+  $ python -mleap_second_client
+  {
+      "TAI_UTC": 36,
+      "last_leap_second": "2015-06-30",
+      "next_leap_second": null
+  }
 
 This webservice gives the current value of UT1-UTC, the date of the
 last leap second and the date of the next leap second. If no leap
@@ -8,28 +26,37 @@ relies on the information of the last Bulletin C and the current date.
 http://hpiers.obspm.fr/eop-pc/index.php?index=webservice
 
 No dependencies except Python itself.
+Support: Python 2.6+, Python 3.
 """
-import json
 import platform
 import xml.etree.ElementTree as etree
+from collections import namedtuple
+from datetime import datetime
+
 try:
     from urllib.request import urlopen, Request
-except ImportError: # Python 2
+except ImportError:  # Python 2
     from urllib2 import urlopen, Request
 
-__version__ = '0.0.1'
-user_agent = '{}/{} leap_second_client/{}'.format(platform.python_implementation(),
-                                                  platform.python_version(),
-                                                  __version__)
-print(user_agent)
-url = "http://hpiers.obspm.fr/eop-pc/webservice/leap_second_server.php"
-headers = {
+
+__all__ = ['request_leap_second_info']
+__version__ = '0.0.2'
+
+LeapSecondInfo = namedtuple('LeapSecondInfo',
+                            'TAI_UTC last_leap_second next_leap_second')
+
+_url = "http://hpiers.obspm.fr/eop-pc/webservice/leap_second_server.php"
+_user_agent = 'leap_second_client/%s %s/%s' % (
+    __version__,
+    platform.python_implementation(),
+    platform.python_version())
+_headers = {
     'Content-Type': 'text/xml; charset=utf-8',
-    #XXX quotes inside quotes!
-    'SOAPAction': '"http://hpiers.obspm.fr/eop-pc/webservice/leap_second_server.php/LeapSecond"',
-    'User-Agent': user_agent,
+    'SOAPAction': '"http://hpiers.obspm.fr/eop-pc/webservice/'
+                  'leap_second_server.php/LeapSecond"',
+    'User-Agent': _user_agent,
 }
-data = '''<?xml version="1.0" encoding="UTF-8"?>
+_data = '''<?xml version="1.0" encoding="UTF-8"?>
 <SOAP-ENV:Envelope
    xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
    xmlns:ns0="http://hpiers.obspm.fr/eop-pc/webservice/"
@@ -45,17 +72,26 @@ data = '''<?xml version="1.0" encoding="UTF-8"?>
 </SOAP-ENV:Envelope>
 '''.encode()
 
-def reformat_date(webservice_date_string):
-    return str(datetime.strptime(webservice_date_string, '%Y %B %d').date())
 
-response = etree.parse(urlopen(Request(url, data, headers)))
-next_leap_second = response.findtext('.//Last_leap_second')
-if next_leap_second != "Not scheduled":
-    next_leap_second = reformat_date(next_leap_second)
-else:
-    next_leap_second = None
+def _parse_date(webservice_date_string):
+    return datetime.strptime(webservice_date_string, '%Y %B %d').date()
 
-print(json.dumps(dict(
-    TAI_UTC=int(response.findtext('.//TAI_UTC'))
-    last_leap_second=reformat_date(response.findtext('.//Last_leap_second')),
-    next_leap_second=next_leap_second)))
+
+def request_leap_second_info():
+    """Make request to the IERS-OP leap second webservice."""
+    response = etree.parse(urlopen(Request(_url, _data, _headers)))
+    next_leap_second = response.findtext('.//Next_leap_second')
+    if next_leap_second != "Not scheduled":
+        next_leap_second = _parse_date(next_leap_second)
+    else:
+        next_leap_second = None
+    return LeapSecondInfo(
+        TAI_UTC=int(response.findtext('.//TAI_UTC')),
+        last_leap_second=_parse_date(response.findtext('.//Last_leap_second')),
+        next_leap_second=next_leap_second)
+
+
+if __name__ == "__main__":
+    import json
+    print(json.dumps(request_leap_second_info()._asdict(),
+                     indent=4, default=str, sort_keys=True))
