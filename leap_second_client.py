@@ -11,22 +11,24 @@ As a library:
 
 Or as a command-line client (greppable json output):
 
-  $ python -mleap_second_client
+  $ python -m leap_second_client
   {
       "TAI_UTC": 36,
       "last_leap_second": "2015-06-30",
       "next_leap_second": null
   }
 
-This webservice gives the current value of UT1-UTC, the date of the
-last leap second and the date of the next leap second. If no leap
-second is scheduled, then it outputs "Not scheduled". This webservice
+It gives the current value of TAI-UTC in (integer) seconds, the date
+of the last leap second and the date of the next leap second. If no
+leap second is scheduled, then the value is None. The webservice
 relies on the information of the last Bulletin C and the current date.
 
-http://hpiers.obspm.fr/eop-pc/index.php?index=webservice
+See http://hpiers.obspm.fr/eop-pc/index.php?index=webservice
 
-No dependencies except Python itself.
+No dependencies except Python itself and the webservice.
+To install, just download leap_second_client.py.
 Support: Python 2.6+, Python 3.
+
 """
 import platform
 import xml.etree.ElementTree as etree
