@@ -42,7 +42,7 @@ except ImportError:  # Python 2
 
 
 __all__ = ['request_leap_second_info']
-__version__ = '0.0.2'
+__version__ = '0.1.0'
 
 LeapSecondInfo = namedtuple('LeapSecondInfo',
                             'TAI_UTC last_leap_second next_leap_second')
@@ -79,12 +79,16 @@ def _parse_date(webservice_date_string):
     return datetime.strptime(webservice_date_string, '%Y %B %d').date()
 
 
+def _parse_next_leap_date(webservice_date_string):
+    return datetime.strptime(webservice_date_string, '%Y %B %d, 23h 59m 60s').date()
+
+
 def request_leap_second_info():
     """Make request to the IERS-OP leap second webservice."""
     response = etree.parse(urlopen(Request(_url, _data, _headers)))
     next_leap_second = response.findtext('.//Next_leap_second')
     if next_leap_second != "Not scheduled":
-        next_leap_second = _parse_date(next_leap_second)
+        next_leap_second = _parse_next_leap_date(next_leap_second)
     else:
         next_leap_second = None
     return LeapSecondInfo(
