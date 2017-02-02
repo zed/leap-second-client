@@ -42,7 +42,7 @@ except ImportError:  # Python 2
 
 
 __all__ = ['request_leap_second_info']
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 LeapSecondInfo = namedtuple('LeapSecondInfo',
                             'TAI_UTC last_leap_second next_leap_second')
@@ -76,7 +76,7 @@ _data = '''<?xml version="1.0" encoding="UTF-8"?>
 
 
 def _parse_date(webservice_date_string):
-    return datetime.strptime(webservice_date_string, '%Y %B %d').date()
+    return datetime.strptime(webservice_date_string, '%d %B %Y').date()
 
 
 def _parse_next_leap_date(webservice_date_string):
