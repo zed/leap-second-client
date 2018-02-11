@@ -30,6 +30,7 @@ To install, just download leap_second_client.py.
 Support: Python 2.6+, Python 3.
 
 """
+import json
 import platform
 import xml.etree.ElementTree as etree
 from collections import namedtuple
@@ -42,7 +43,7 @@ except ImportError:  # Python 2
 
 
 __all__ = ['request_leap_second_info']
-__version__ = '0.2.0'
+__version__ = '1.0'
 
 LeapSecondInfo = namedtuple('LeapSecondInfo',
                             'TAI_UTC last_leap_second next_leap_second')
@@ -97,7 +98,10 @@ def request_leap_second_info():
         next_leap_second=next_leap_second)
 
 
-if __name__ == "__main__":
-    import json
+def main():
     print(json.dumps(request_leap_second_info()._asdict(),
                      indent=4, default=str, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()
